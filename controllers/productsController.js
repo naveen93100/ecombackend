@@ -52,15 +52,26 @@ export const getProductById = async (req, res) => {
   }
 };
 
+export const getWishlist = async (req, res) => {
+  try {
+    let userId = req.userId;
+
+    let wishlist = await User.findOne({ _id: userId }).select('wishlist').populate('wishlist.productId');
+    return res.status(200).json({ success: true, data: wishlist });
+  } catch (er) {
+    return res.status(500).json({ success: false, message: er.message });
+  }
+};
+
 export const addProductWishlist = async (req, res) => {
   try {
     let userId = req.userId;
     let { id: productId } = req.params;
 
-    if (!id)
+    if (!productId)
       return res
         .status(401)
-        .json({ success: false, message: "Id is not provided" });
+        .json({ success: false, message: "productId is not provided" });
 
     if (!userId)
       return res
@@ -69,19 +80,23 @@ export const addProductWishlist = async (req, res) => {
 
     let user = await User.findOne({ _id: userId });
 
-    if(user.wishlist.length>0){
-      let wishlistExist = user.wishlist.some(item=>item.productId.equals(productId));
+    if (user.wishlist.length > 0) {
+      let wishlistExist = user.wishlist.some((item) =>
+        item.productId.equals(productId)
+      );
 
-      if(wishlistExist){
-          return res.status(200).json({success:true,message:'Product already in wishlist'})
+      if (wishlistExist) {
+        return res
+          .status(200)
+          .json({ success: true, message: "Product already in wishlist" });
       }
-
     }
-
-    user.wishlist.push(productId);
+    user.wishlist.push({ productId });
     await user.save();
 
-    return res.status(200).json({ success: true, message:"Product add to Wishlist" });
+    return res
+      .status(200)
+      .json({ success: true, message: "Product add to Wishlist" });
   } catch (er) {
     return res.status(500).json({ success: false, message: er.message });
   }
