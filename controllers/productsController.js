@@ -1,7 +1,7 @@
 import Product from "../models/productModel.js";
 import path from "path";
 import fs from "fs";
-
+import User from "../models/userModel.js";
 
 // get image
 export const getImage = async (req, res) => {
@@ -26,31 +26,66 @@ export const getImage = async (req, res) => {
 };
 
 // get all product
-export const getProducts=async(req,res)=>{
+export const getProducts = async (req, res) => {
   try {
-    
-    let product=await Product.find({});
+    let product = await Product.find({});
 
-    return res.status(200).json({success:true,data:product});
-
+    return res.status(200).json({ success: true, data: product });
   } catch (er) {
-     return res.status(500).json({success:false,message:er.message});
+    return res.status(500).json({ success: false, message: er.message });
   }
-}
+};
 
 // get single product by id
-export const getProductById=async(req,res)=>{
+export const getProductById = async (req, res) => {
   try {
-     let {id}=req.params;
-     if(!id) return res.status(400).json({success:false,message:"Id is not provided"});
+    let { id } = req.params;
+    if (!id)
+      return res
+        .status(400)
+        .json({ success: false, message: "Id is not provided" });
 
-     let product=await Product.findById(id)
-     return res.status(200).json({success:true,data:product});
+    let product = await Product.findById(id);
+    return res.status(200).json({ success: true, data: product });
   } catch (er) {
-    return res.status(500).json({success:false,message:er.message});
+    return res.status(500).json({ success: false, message: er.message });
   }
-}
+};
 
+export const addProductWishlist = async (req, res) => {
+  try {
+    let userId = req.userId;
+    let { id: productId } = req.params;
+
+    if (!id)
+      return res
+        .status(401)
+        .json({ success: false, message: "Id is not provided" });
+
+    if (!userId)
+      return res
+        .status(401)
+        .json({ success: false, message: "User Id is not found" });
+
+    let user = await User.findOne({ _id: userId });
+
+    if(user.wishlist.length>0){
+      let wishlistExist = user.wishlist.some(item=>item.productId.equals(productId));
+
+      if(wishlistExist){
+          return res.status(200).json({success:true,message:'Product already in wishlist'})
+      }
+
+    }
+
+    user.wishlist.push(productId);
+    await user.save();
+
+    return res.status(200).json({ success: true, message:"Product add to Wishlist" });
+  } catch (er) {
+    return res.status(500).json({ success: false, message: er.message });
+  }
+};
 
 // admin----------------
 export const addProducts = async (req, res) => {
@@ -123,7 +158,7 @@ export const editProduct = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Id is not provided" });
 
-    let { name, description, price, stock, imageUrlArray,body } = req.body;
+    let { name, description, price, stock, imageUrlArray, body } = req.body;
 
     imageUrlArray = imageUrlArray.split(",");
 
@@ -142,7 +177,7 @@ export const editProduct = async (req, res) => {
 
     if (stock) product.stock = stock;
 
-    if(body) product.body=body;
+    if (body) product.body = body;
 
     if (req.files && req.files.image) {
       let imgUrl = req.files.image.map((item) => {
@@ -153,11 +188,9 @@ export const editProduct = async (req, res) => {
     product.images = imageUrlArray;
     await product.save();
 
-    return (
-      res
-        .status(200)
-        .json({ success: true, message: "Product Update", data: product })
-    );
+    return res
+      .status(200)
+      .json({ success: true, message: "Product Update", data: product });
   } catch (er) {
     return res.status(500).json({ success: false, message: er.message });
   }
