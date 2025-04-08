@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import authRoute from './routes/authRoute.js';
 import productsRoute from './routes/productsRoute.js';
+import userRoute from './routes/userRoute.js';
 import { connectDB } from './config/db.js';
 import cors from 'cors';
 import path from 'path';
@@ -20,7 +21,7 @@ connectDB();
 app.use('/api/products/image',express.static(path.join(__dirname,'/uploads/images')))
 app.use('/api/auth',authRoute);
 
-// app.use('/api/user',userRoute);
+app.use('/api/user',userRoute);
 
 app.use('/api/products',productsRoute);
 

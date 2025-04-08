@@ -24,7 +24,12 @@ const productSchema = new mongoose.Schema(
       images: [{}],
       body:{
         type:String
-      }
+      },
+      wattage:{
+         type:Number,
+         min:0
+      },
+      type:String
     },
     { timestamps: true }
   );

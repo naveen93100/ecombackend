@@ -9,9 +9,8 @@ export const isAuth=async(req,res,next)=>{
       return res
         .status(401)
         .json({ success: false, message: "No token provided" });
-
-    let decode = jwt.verify(token, process.env.JWT_SECRET);
-
+     let decode = jwt.verify(token, process.env.JWT_SECRET);
+    
     req.userId = decode.id;
     next();
         
