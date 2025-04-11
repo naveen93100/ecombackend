@@ -12,7 +12,7 @@ export const addToCart = async (req, res) => {
     let userCart = await Cart.findOne({ userId });
 
     if (!userCart) {
-       await Cart.create({
+      await Cart.create({
         userId,
         items: [
           {
@@ -115,13 +115,146 @@ export const removeAllFromCart = async (req, res) => {
     userCart.items = [];
     await userCart.save();
 
-    return res
-      .status(200)
-      .json({ success: true, message: "All products removed from cart",data:userCart });
+    return res.status(200).json({
+      success: true,
+      message: "All products removed from cart",
+      data: userCart,
+    });
   } catch (er) {
     return res.status(500).json({ success: false, message: er.message });
   }
 };
+
+export const addAddress = async (req, res) => {
+  try {
+    let userId = req.userId;
+    let {
+      fullName,
+      phone,
+      street,
+      city,
+      state,
+      postalCode,
+      country,
+      isDefault = false,
+    } = req.body;
+
+    if (
+      !fullName ||
+      !phone ||
+      !street ||
+      !city ||
+      !state ||
+      !postalCode ||
+      !country
+    )
+      return res
+        .status(401)
+        .json({ success: false, message: "All fields are required" });
+
+    if (!userId)
+      return res
+        .status(400)
+        .json({ success: false, message: "Authentication error" });
+
+    let user = await User.findOne({ _id: userId });
+
+    if (!user)
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+
+    user.addresses.push(req.body);
+
+    await user.save();
+    return res.status(200).json({ success: true, data: user.addresses });
+  } catch (er) {
+    return res.status(500).json({ success: false, message: er.message });
+  }
+};
+
+export const getAddress = async (req, res) => {
+  try {
+    let userId = req.userId;
+
+    let address = await User.findOne({ _id: userId }).select("addresses");
+
+    return res.status(200).json({ success: true, data: address });
+  } catch (er) {
+    return res.status(500).json({ success: false, message: er.message });
+  }
+};
+
+
+export const removeAddress = async (req, res) => {
+  try {
+    let { id } = req.params;
+    let userId = req.userId;
+
+    if (!id)
+      return res
+        .status(401)
+        .json({ success: false, message: "ID not provided" });
+
+    if (!userId)
+      return res
+        .status(400)
+        .json({ success: false, message: "Unauthorized: User ID not found" });
+
+    let user = await User.findById(userId);
+
+    if (!user)
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+
+    let addressExist = user.addresses.some((item) => item._id.equals(id));
+
+    if (!addressExist)
+      return res
+        .status(404)
+        .json({ success: false, message: "Address not found" });
+
+    user.addresses = user.addresses.filter((item) => !item._id.equals(id));
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Address Removed",
+      data: user.addresses,
+    });
+  } catch (er) {
+    return res.status(500).json({ success: false, message: er.message });
+  }
+};
+
+export const setDefaultAddress=async(req,res)=>{
+  try {
+    
+    let userId=req.userId;
+
+    let {id}=req.params;
+
+    if(!userId) return res.status(401).json({success:false,message:'Unauthorized Error!'});
+    if(!id) return res.status(400).json({success:false,message:'ID not found'});
+
+    let user=await User.findById(userId);
+
+    if(!user) return res.status(404).json({success:false,message:'User not found'});
+
+    user.addresses=user.addresses.map(item=>item.isDefault==true?{...item,isDefault:false}:item);
+    user.addresses=user.addresses.map(item=>item._id.equals(id)?{...item,isDefault:true}:{...item,isDefault:false});
+
+    await user.save();
+
+
+    return res.status(200).json({success:true,message:'Address set to default',data:user.addresses});
+
+  } catch (er) {
+     return res.status(500).json({success:false,message:er.message});
+  }
+}
 
 export const getWishlist = async (req, res) => {
   try {

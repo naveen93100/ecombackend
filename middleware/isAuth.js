@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 export const isAuth=async(req,res,next)=>{
     try {
 
-        let token = req.headers.authorization.replace("Bearer", "").trim("");
+        let token = req.headers?.authorization?.replace("Bearer", "").trim("");
 
     if (!token)
       return res
